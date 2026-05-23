@@ -2,10 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-/**
- * AboutUsPanel displays project information.
- * Shows team members, project title, and university information.
- */
+
 public class AboutUsPanel extends JPanel {
     private BankManagementSystem app;
     
