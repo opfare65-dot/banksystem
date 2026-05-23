@@ -162,9 +162,7 @@ public class FileManager {
     private static void createSampleClientsFile() {
         try {
             FileWriter writer = new FileWriter(CLIENTS_FILE);
-            writer.write("ACC001,John Smith,1500.00,1234,ACTIVE\n");
-            writer.write("ACC002,Jane Doe,2500.00,5678,ACTIVE\n");
-            writer.write("ACC003,Bob Wilson,750.50,9999,ACTIVE\n");
+            writer.write("ACC001,Jane Doe,2500.00,5678,ACTIVE\n");
             writer.close();
         } catch (IOException e) {
             System.err.println("Error creating sample clients file: " + e.getMessage());

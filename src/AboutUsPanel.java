@@ -53,7 +53,7 @@ teamMembersArea.setText("  1. Abdiwasa mahammed    - 1701996\n" +
         
         JLabel universityLabel = new JLabel("University: Dire Dawa University");
         JLabel courseLabel = new JLabel("Course: Object-Oriented Programming (CS201)");
-        JLabel instructorLabel = new JLabel("Instructor: Dr. Smith");
+        JLabel instructorLabel = new JLabel("Instructor:");
         
         JButton backButton = new JButton("Back to Login");
         
