@@ -1,333 +1,412 @@
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.List;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import java.awt.CardLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 /**
- * Main application class for Bank Management System.
- * Demonstrates OOP principles through a complete Java Swing application.
+ * Main application controller.
+ * Holds GUI screens, loaded data, and active user session state.
  */
 public class BankManagementSystem {
-    private JFrame mainFrame;
-    private CardLayout cardLayout;
-    private JPanel mainPanel;
-    
-    private LoginPanel loginPanel;
-    private AdminDashboard adminDashboard;
-    private ClientDashboard clientDashboard;
-    private AboutUsPanel aboutUsPanel;
-    
-    private Map<String, String> adminCredentials;
-    private List<Account> accounts;
-    private List<Transaction> transactions;
-    
-    private Admin currentAdmin;
-    private Client currentClient;
+    // Card key for login screen.
+    private static final String PANEL_LOGIN = "LOGIN";
+    // Card key for admin dashboard screen.
+    private static final String PANEL_ADMIN_DASHBOARD = "ADMIN_DASHBOARD";
+    // Card key for client dashboard screen.
+    private static final String PANEL_CLIENT_DASHBOARD = "CLIENT_DASHBOARD";
+    // Card key for about-us screen.
+    private static final String PANEL_ABOUT_US = "ABOUT_US";
 
+    // Transaction type constant for deposits.
+    private static final String TRANSACTION_TYPE_DEPOSIT = "DEPOSIT";
+    // Transaction type constant for withdrawals.
+    private static final String TRANSACTION_TYPE_WITHDRAWAL = "WITHDRAWAL";
+    // Transaction type constant for transfers.
+    private static final String TRANSACTION_TYPE_TRANSFER = "TRANSFER";
+
+    // Top-level JFrame for the whole app.
+    private JFrame applicationFrame;
+    // CardLayout used to switch between screens.
+    private CardLayout screenCardLayout;
+    // Panel that hosts all card screens.
+    private JPanel screenContainerPanel;
+
+    // Login screen component.
+    private LoginPanel loginScreen;
+    // Admin dashboard component.
+    private AdminDashboard adminDashboardScreen;
+    // Client dashboard component.
+    private ClientDashboard clientDashboardScreen;
+    // About-us screen component.
+    private AboutUsPanel aboutUsScreen;
+
+    // Map of admin username to admin password.
+    private Map<String, String> adminCredentialMap;
+    // In-memory list of all client accounts.
+    private List<Account> accountList;
+    // In-memory list of all transactions.
+    private List<Transaction> transactionHistoryList;
+
+    // Currently logged-in admin object.
+    private Admin loggedInAdmin;
+    // Currently logged-in client object.
+    private Client loggedInClient;
+
+    // Creates app controller and initializes data/UI.
     public BankManagementSystem() {
-        initializeData();
-        initializeGUI();
+        // Load accounts, admins, and transactions from files.
+        loadInitialData();
+        // Build application frame and screens.
+        buildApplicationWindow();
     }
 
-    /**
-     * Initializes data from files.
-     */
-    private void initializeData() {
-        adminCredentials = FileManager.readAdminsFromFile();
-        accounts = FileManager.readClientsFromFile();
-        transactions = FileManager.readTransactionsFromFile();
+    // Loads persisted data into memory.
+    private void loadInitialData() {
+        // Load admin credentials map from file.
+        adminCredentialMap = FileManager.readAdminsFromFile();
+        // Load accounts list from file.
+        accountList = FileManager.readClientsFromFile();
+        // Load transaction history list from file.
+        transactionHistoryList = FileManager.readTransactionsFromFile();
     }
 
-    /**
-     * Initializes the main GUI components.
-     */
-    private void initializeGUI() {
-        mainFrame = new JFrame("KAAFI BANK Management System");
-        mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        mainFrame.setSize(800, 600);
-        mainFrame.setLocationRelativeTo(null);
-        
-        cardLayout = new CardLayout();
-        mainPanel = new JPanel(cardLayout);
-        
-        loginPanel = new LoginPanel(this);
-        adminDashboard = new AdminDashboard(this);
-        clientDashboard = new ClientDashboard(this);
-        aboutUsPanel = new AboutUsPanel(this);
-        
-        mainPanel.add(loginPanel, "LOGIN");
-        mainPanel.add(adminDashboard, "ADMIN_DASHBOARD");
-        mainPanel.add(clientDashboard, "CLIENT_DASHBOARD");
-        mainPanel.add(aboutUsPanel, "ABOUT_US");
-        
-        mainFrame.add(mainPanel);
-        
-        mainFrame.addWindowListener(new WindowAdapter() {
+    // Builds the app frame and all card panels.
+    private void buildApplicationWindow() {
+        // Create main app frame.
+        applicationFrame = new JFrame("KAAFI BANK Management System");
+        // Use manual close behavior so we can show confirmation.
+        applicationFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        // Set default frame size.
+        applicationFrame.setSize(800, 600);
+        // Center frame on screen.
+        applicationFrame.setLocationRelativeTo(null);
+
+        // Create card layout manager.
+        screenCardLayout = new CardLayout();
+        // Create panel that hosts all cards.
+        screenContainerPanel = new JPanel(screenCardLayout);
+
+        // Create login panel and pass app reference.
+        loginScreen = new LoginPanel(this);
+        // Create admin dashboard and pass app reference.
+        adminDashboardScreen = new AdminDashboard(this);
+        // Create client dashboard and pass app reference.
+        clientDashboardScreen = new ClientDashboard(this);
+        // Create about-us panel and pass app reference.
+        aboutUsScreen = new AboutUsPanel(this);
+
+        // Register login card.
+        screenContainerPanel.add(loginScreen, PANEL_LOGIN);
+        // Register admin dashboard card.
+        screenContainerPanel.add(adminDashboardScreen, PANEL_ADMIN_DASHBOARD);
+        // Register client dashboard card.
+        screenContainerPanel.add(clientDashboardScreen, PANEL_CLIENT_DASHBOARD);
+        // Register about-us card.
+        screenContainerPanel.add(aboutUsScreen, PANEL_ABOUT_US);
+
+        // Add card container to frame.
+        applicationFrame.add(screenContainerPanel);
+
+        // Intercept window-close clicks to confirm before exit.
+        applicationFrame.addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent e) {
+            public void windowClosing(WindowEvent event) {
+                // Reuse central exit confirmation flow.
                 exitApplication();
             }
         });
     }
 
-    /**
-     * Shows the specified panel by name.
-     */
+    // Shows a screen by card key.
     public void showPanel(String panelName) {
-        cardLayout.show(mainPanel, panelName);
+        // Ask CardLayout to display requested card.
+        screenCardLayout.show(screenContainerPanel, panelName);
     }
 
-    /**
-     * Handles admin login.
-     */
+    // Authenticates admin credentials and opens admin dashboard.
     public boolean adminLogin(String username, String password) {
-        if (adminCredentials.containsKey(username) && 
-            adminCredentials.get(username).equals(password)) {
-            currentAdmin = new Admin(username, "Admin User", password);
-            adminDashboard.refreshData();
-            showPanel("ADMIN_DASHBOARD");
+        // Validate username exists and password matches stored value.
+        if (adminCredentialMap.containsKey(username) && adminCredentialMap.get(username).equals(password)) {
+            // Create logged-in admin session object.
+            loggedInAdmin = new Admin(username, "Admin User", password);
+            // Refresh dashboard table before showing it.
+            adminDashboardScreen.refreshData();
+            // Navigate to admin dashboard.
+            showPanel(PANEL_ADMIN_DASHBOARD);
             return true;
         }
+        // Return false when credentials do not match.
         return false;
     }
 
-    /**
-     * Handles client login.
-     */
+    // Authenticates client credentials and opens client dashboard.
     public boolean clientLogin(String accountNumber, String pin) {
-        for (Account acc : accounts) {
-            if (acc.getAccountNumber().equals(accountNumber)) {
-                if (acc.isActive() && acc.validatePin(pin)) {
-                    currentClient = new Client(accountNumber, acc.getAccountHolderName(), 
-                                                pin, acc);
-                    clientDashboard.refreshData();
-                    showPanel("CLIENT_DASHBOARD");
+        // Loop through all accounts.
+        for (Account account : accountList) {
+            // Check matching account number.
+            if (account.getAccountNumber().equals(accountNumber)) {
+                // Check active status and PIN match.
+                if (account.isActive() && account.validatePin(pin)) {
+                    // Create logged-in client session object.
+                    loggedInClient = new Client(accountNumber, account.getAccountHolderName(), pin, account);
+                    // Refresh dashboard summary before showing it.
+                    clientDashboardScreen.refreshData();
+                    // Navigate to client dashboard.
+                    showPanel(PANEL_CLIENT_DASHBOARD);
                     return true;
                 }
+                // Stop early when account found but PIN/status is invalid.
+                return false;
             }
         }
+        // Return false when no matching account number is found.
         return false;
     }
 
-    /**
-     * Handles client logout.
-     */
+    // Clears client session and returns to login screen.
     public void clientLogout() {
-        currentClient = null;
-        showPanel("LOGIN");
+        // Remove logged-in client reference.
+        loggedInClient = null;
+        // Navigate back to login card.
+        showPanel(PANEL_LOGIN);
     }
 
-    /**
-     * Handles admin logout.
-     */
+    // Clears admin session and returns to login screen.
     public void adminLogout() {
-        currentAdmin = null;
-        showPanel("LOGIN");
+        // Remove logged-in admin reference.
+        loggedInAdmin = null;
+        // Navigate back to login card.
+        showPanel(PANEL_LOGIN);
     }
 
-    /**
-     * Gets account by account number.
-     */
+    // Finds account object by account number.
     public Account getAccountByNumber(String accountNumber) throws AccountNotFoundException {
-        for (Account acc : accounts) {
-            if (acc.getAccountNumber().equals(accountNumber)) {
-                return acc;
+        // Scan every account in list.
+        for (Account account : accountList) {
+            // Return account immediately on match.
+            if (account.getAccountNumber().equals(accountNumber)) {
+                return account;
             }
         }
+        // Throw typed exception when account is missing.
         throw new AccountNotFoundException("Account " + accountNumber + " not found.");
     }
 
-    /**
-     * Handles deposit operation.
-     */
+    // Handles deposit operation.
     public boolean deposit(String accountNumber, double amount) {
         try {
-            Account acc = getAccountByNumber(accountNumber);
-            acc.deposit(amount);
-            saveTransaction(new Transaction("TXN" + (transactions.size() + 1), 
-                          accountNumber, "DEPOSIT", amount));
+            // Resolve destination account.
+            Account destinationAccount = getAccountByNumber(accountNumber);
+            // Apply deposit business logic on account.
+            destinationAccount.deposit(amount);
+            // Record transaction in memory and file.
+            saveTransaction(new Transaction(generateTransactionId(), accountNumber, TRANSACTION_TYPE_DEPOSIT, amount));
+            // Persist updated account balances.
             saveAccountsToFile();
             return true;
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(mainFrame, e.getMessage(), "Error", 
-                                        JOptionPane.ERROR_MESSAGE);
+        } catch (Exception exception) {
+            // Show user-friendly error message dialog.
+            JOptionPane.showMessageDialog(applicationFrame, exception.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }
 
-    /**
-     * Handles withdrawal operation.
-     */
+    // Handles withdrawal operation.
     public boolean withdraw(String accountNumber, double amount) {
         try {
-            Account acc = getAccountByNumber(accountNumber);
-            acc.withdraw(amount);
-            saveTransaction(new Transaction("TXN" + (transactions.size() + 1), 
-                          accountNumber, "WITHDRAWAL", amount));
+            // Resolve source account.
+            Account sourceAccount = getAccountByNumber(accountNumber);
+            // Apply withdrawal business logic on account.
+            sourceAccount.withdraw(amount);
+            // Record transaction in memory and file.
+            saveTransaction(new Transaction(generateTransactionId(), accountNumber, TRANSACTION_TYPE_WITHDRAWAL, amount));
+            // Persist updated account balances.
             saveAccountsToFile();
             return true;
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(mainFrame, e.getMessage(), "Error", 
-                                        JOptionPane.ERROR_MESSAGE);
+        } catch (Exception exception) {
+            // Show user-friendly error message dialog.
+            JOptionPane.showMessageDialog(applicationFrame, exception.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }
 
-    /**
-     * Handles transfer operation.
-     */
-    public boolean transfer(String fromAccount, String toAccount, double amount) {
+    // Handles transfer operation.
+    public boolean transfer(String fromAccountNumber, String toAccountNumber, double amount) {
         try {
-            Account source = getAccountByNumber(fromAccount);
-            Account target = getAccountByNumber(toAccount);
-            
-            if (source == null || target == null) {
-                throw new AccountNotFoundException("One or both accounts not found.");
+            // Prevent self-transfer because it is usually accidental/no-op.
+            if (fromAccountNumber.equals(toAccountNumber)) {
+                throw new InvalidAmountException("Cannot transfer to the same account.");
             }
-            
-            source.withdraw(amount);
-            target.deposit(amount);
-            
-            saveTransaction(new Transaction("TXN" + (transactions.size() + 1), 
-                          fromAccount, "TRANSFER", amount, toAccount));
+
+            // Resolve source account.
+            Account sourceAccount = getAccountByNumber(fromAccountNumber);
+            // Resolve destination account.
+            Account targetAccount = getAccountByNumber(toAccountNumber);
+
+            // First debit source account.
+            sourceAccount.withdraw(amount);
+            // Then credit target account.
+            targetAccount.deposit(amount);
+
+            // Record transfer transaction in memory and file.
+            saveTransaction(
+                new Transaction(generateTransactionId(), fromAccountNumber, TRANSACTION_TYPE_TRANSFER, amount, toAccountNumber)
+            );
+            // Persist both affected account balances.
             saveAccountsToFile();
             return true;
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(mainFrame, e.getMessage(), "Error", 
-                                        JOptionPane.ERROR_MESSAGE);
+        } catch (Exception exception) {
+            // Show user-friendly error message dialog.
+            JOptionPane.showMessageDialog(applicationFrame, exception.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
     }
 
-    /**
-     * Saves transaction to file.
-     */
-    private void saveTransaction(Transaction trans) {
-        transactions.add(trans);
+    // Adds transaction to in-memory list and appends to file.
+    private void saveTransaction(Transaction transactionRecord) {
+        // Add transaction to runtime history list.
+        transactionHistoryList.add(transactionRecord);
         try {
-            FileManager.appendTransactionToFile(trans);
-        } catch (Exception e) {
-            System.err.println("Error saving transaction: " + e.getMessage());
+            // Append transaction row to transaction file.
+            FileManager.appendTransactionToFile(transactionRecord);
+        } catch (Exception exception) {
+            // Print file-write error in console.
+            System.err.println("Error saving transaction: " + exception.getMessage());
         }
     }
 
-    /**
-     * Saves accounts to file.
-     */
+    // Writes current account list to clients file.
     private void saveAccountsToFile() {
         try {
-            FileManager.writeClientsToFile(accounts);
-        } catch (Exception e) {
-            System.err.println("Error saving accounts: " + e.getMessage());
+            // Persist all accounts.
+            FileManager.writeClientsToFile(accountList);
+        } catch (Exception exception) {
+            // Print file-write error in console.
+            System.err.println("Error saving accounts: " + exception.getMessage());
         }
     }
 
-    /**
-     * Gets transactions for an account.
-     */
+    // Returns transactions where account is sender or receiver.
     public List<Transaction> getAccountTransactions(String accountNumber) {
-        List<Transaction> result = new ArrayList<>();
-        for (Transaction t : transactions) {
-            if (t.getAccountNumber().equals(accountNumber) || 
-                t.getTargetAccount().equals(accountNumber)) {
-                result.add(t);
+        // Prepare output list.
+        List<Transaction> matchingTransactions = new ArrayList<>();
+        // Check each transaction record.
+        for (Transaction transaction : transactionHistoryList) {
+            // Include when account is primary account or transfer target.
+            if (transaction.getAccountNumber().equals(accountNumber) || transaction.getTargetAccount().equals(accountNumber)) {
+                matchingTransactions.add(transaction);
             }
         }
-        return result;
+        // Return filtered transaction list.
+        return matchingTransactions;
     }
 
-    /**
-     * Gets total account count.
-     */
+    // Returns total account count.
     public int getTotalAccounts() {
-        return accounts.size();
+        // Return list size.
+        return accountList.size();
     }
 
-    /**
-     * Gets account list for admin view.
-     */
+    // Returns defensive copy of all accounts.
     public List<Account> getAllAccounts() {
-        return new ArrayList<>(accounts);
+        // Return copied list to avoid exposing internal list reference.
+        return new ArrayList<>(accountList);
     }
 
-    /**
-     * Gets the account for the currently logged-in client.
-     */
+    // Returns currently logged-in client's account object.
     public Account getCurrentClientAccount() {
-        if (currentClient != null) {
-            return currentClient.getAccount();
-        }
-        return null;
+        // Return account when client session exists, otherwise null.
+        return loggedInClient != null ? loggedInClient.getAccount() : null;
     }
 
-    /**
-     * Deletes a client account.
-     */
+    // Deletes one account by account number.
     public boolean deleteAccount(String accountNumber) {
-        for (int i = 0; i < accounts.size(); i++) {
-            if (accounts.get(i).getAccountNumber().equals(accountNumber)) {
-                accounts.remove(i);
+        // Iterate with index because we remove on match.
+        for (int accountIndex = 0; accountIndex < accountList.size(); accountIndex++) {
+            // Compare account number at current index.
+            if (accountList.get(accountIndex).getAccountNumber().equals(accountNumber)) {
+                // Remove matching account.
+                accountList.remove(accountIndex);
+                // Persist updated account list.
                 saveAccountsToFile();
                 return true;
             }
         }
+        // Return false when no account was removed.
         return false;
     }
 
-    /**
-     * Deactivates a client account.
-     */
+    // Sets one account to INACTIVE status.
     public boolean deactivateAccount(String accountNumber) {
-        for (Account acc : accounts) {
-            if (acc.getAccountNumber().equals(accountNumber)) {
-                acc.setAccountStatus("INACTIVE");
+        // Scan all accounts.
+        for (Account account : accountList) {
+            // Find matching account.
+            if (account.getAccountNumber().equals(accountNumber)) {
+                // Set account status to INACTIVE.
+                account.setAccountStatus(Account.STATUS_INACTIVE);
+                // Persist updated account status.
                 saveAccountsToFile();
                 return true;
             }
         }
+        // Return false when account is not found.
         return false;
     }
 
-    /**
-     * Adds a new client account.
-     */
-    public boolean addAccount(String accountNumber, String name, String pin, double balance) {
-        for (Account acc : accounts) {
-            if (acc.getAccountNumber().equals(accountNumber)) {
-                return false; // Account already exists
+    // Adds a new account when number is unique.
+    public boolean addAccount(String accountNumber, String holderName, String pin, double openingBalance) {
+        // Scan existing accounts to enforce unique account number.
+        for (Account account : accountList) {
+            if (account.getAccountNumber().equals(accountNumber)) {
+                return false;
             }
         }
-        Account newAccount = new Account(accountNumber, name, balance, pin);
-        accounts.add(newAccount);
+
+        // Create new account object.
+        Account createdAccount = new Account(accountNumber, holderName, openingBalance, pin);
+        // Add account to runtime list.
+        accountList.add(createdAccount);
+        // Persist updated account list.
         saveAccountsToFile();
         return true;
     }
 
-    /**
-     * Exits the application with confirmation.
-     */
+    // Shows exit confirmation and closes app on YES.
     public void exitApplication() {
-        int result = JOptionPane.showConfirmDialog(mainFrame, 
-            "Are you sure you want to exit?", "Exit Confirmation", 
-            JOptionPane.YES_NO_OPTION);
-        if (result == JOptionPane.YES_OPTION) {
+        // Ask user for exit confirmation.
+        int userChoice = JOptionPane.showConfirmDialog(
+            applicationFrame,
+            "Are you sure you want to exit?",
+            "Exit Confirmation",
+            JOptionPane.YES_NO_OPTION
+        );
+        // Exit process only on YES selection.
+        if (userChoice == JOptionPane.YES_OPTION) {
             System.exit(0);
         }
     }
 
-    /**
-     * Starts the application.
-     */
+    // Makes frame visible.
     public void start() {
-        mainFrame.setVisible(true);
+        // Display top-level frame.
+        applicationFrame.setVisible(true);
     }
 
+    // Generates next transaction ID based on list size.
+    private String generateTransactionId() {
+        // Example format: TXN1, TXN2, ...
+        return "TXN" + (transactionHistoryList.size() + 1);
+    }
+
+    // Application entry point.
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            new BankManagementSystem().start();
-        });
+        // Start Swing app on EDT thread.
+        SwingUtilities.invokeLater(() -> new BankManagementSystem().start());
     }
 }

@@ -1,43 +1,58 @@
 /**
- * Abstract User class demonstrating abstraction.
- * This class defines the common behavior for all users and forces subclasses 
- * to implement specific behavior through abstract methods.
+ * Base type for all users in the system.
+ * Every user has an ID, a display name, and a secret credential.
  */
 public abstract class User {
+    // Unique identifier for the user (admin username or client account number).
     protected String userId;
+    // Friendly display name shown in logs or debug output.
     protected String name;
+    // Secret credential kept for simple in-memory validation.
     protected String password;
 
+    // Creates the common user state shared by all subclasses.
     public User(String userId, String name, String password) {
+        // Store caller-provided user identifier.
         this.userId = userId;
+        // Store caller-provided display name.
         this.name = name;
+        // Store caller-provided password/PIN string.
         this.password = password;
     }
 
-    public String getUserId() { return userId; }
-    public String getName() { return name; }
-    public String getPassword() { return password; }
+    // Returns the user identifier.
+    public String getUserId() {
+        return userId;
+    }
+
+    // Returns the display name.
+    public String getName() {
+        return name;
+    }
+
+    // Returns the currently stored credential.
+    public String getPassword() {
+        return password;
+    }
 
     /**
-     * Abstract method for login - must be implemented by subclasses.
+     * Subclass-specific login implementation.
+     *
+     * @param enteredCredential raw credential entered by the user
+     * @return true when login check succeeds
+     * @throws InvalidLoginException when credential validation fails
      */
-    public abstract boolean login(String credentials) throws InvalidLoginException;
+    public abstract boolean login(String enteredCredential) throws InvalidLoginException;
 
-    /**
-     * Abstract method for logout - must be implemented by subclasses.
-     */
+    // Subclass-specific logout behavior.
     public abstract void logout();
 
-    /**
-     * Abstract method for displaying user info - must be implemented by subclasses.
-     * This demonstrates polymorphism - each subclass provides its own implementation.
-     */
+    // Subclass-specific user info output.
     public abstract void displayInfo();
 
-    /**
-     * Validates user credentials.
-     */
+    // Shared helper that checks plain-text credential equality.
     protected boolean validateCredentials(String inputPassword) {
+        // Return true only when strings are exactly equal.
         return password.equals(inputPassword);
     }
 }

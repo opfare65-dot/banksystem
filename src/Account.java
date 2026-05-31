@@ -1,103 +1,148 @@
 /**
- * Account class represents a bank account.
- * Demonstrates encapsulation with private fields and public getters/setters.
+ * Simple bank account model.
+ * Keeps account identity, credential, status, and balance.
  */
 public class Account {
+    // Constant for active account state.
+    public static final String STATUS_ACTIVE = "ACTIVE";
+    // Constant for inactive account state.
+    public static final String STATUS_INACTIVE = "INACTIVE";
+
+    // Unique account identifier.
     private String accountNumber;
+    // Human-readable account owner name.
     private String accountHolderName;
+    // Current wallet balance.
     private double balance;
+    // PIN used by client login.
     private String pin;
+    // Current account status flag.
     private String accountStatus;
 
-    public Account(String accountNumber, String accountHolderName, double balance, 
-                   String pin) {
+    // Creates a new account object with ACTIVE default status.
+    public Account(String accountNumber, String accountHolderName, double openingBalance, String pin) {
+        // Save account number exactly as provided.
         this.accountNumber = accountNumber;
+        // Save holder name exactly as provided.
         this.accountHolderName = accountHolderName;
-        this.balance = balance;
+        // Set initial balance to caller-provided opening balance.
+        this.balance = openingBalance;
+        // Set PIN to caller-provided value.
         this.pin = pin;
-        this.accountStatus = "ACTIVE";
+        // New accounts start as ACTIVE by default.
+        this.accountStatus = STATUS_ACTIVE;
     }
 
-    public String getAccountNumber() { return accountNumber; }
-    public String getAccountHolderName() { return accountHolderName; }
-    public double getBalance() { return balance; }
-    public String getPin() { return pin; }
-    public String getAccountStatus() { return accountStatus; }
+    // Returns account number.
+    public String getAccountNumber() {
+        return accountNumber;
+    }
 
-    public void setBalance(double balance) { this.balance = balance; }
-    public void setAccountStatus(String status) { this.accountStatus = status; }
+    // Returns account holder name.
+    public String getAccountHolderName() {
+        return accountHolderName;
+    }
 
-    /**
-     * Deposits money into the account.
-     * @param amount Amount to deposit (must be positive)
-     * @throws InvalidAmountException if amount is negative or zero
-     */
+    // Returns current numeric balance.
+    public double getBalance() {
+        return balance;
+    }
+
+    // Returns account PIN.
+    public String getPin() {
+        return pin;
+    }
+
+    // Returns account status string.
+    public String getAccountStatus() {
+        return accountStatus;
+    }
+
+    // Overwrites account balance with a new value.
+    public void setBalance(double newBalance) {
+        // Replace old balance value.
+        this.balance = newBalance;
+    }
+
+    // Overwrites account status with caller-provided status text.
+    public void setAccountStatus(String status) {
+        // Replace old status value.
+        this.accountStatus = status;
+    }
+
+    // Adds money to the account after validation.
     public void deposit(double amount) throws InvalidAmountException {
+        // Reject zero or negative values.
         if (amount <= 0) {
             throw new InvalidAmountException("Deposit amount must be positive.");
         }
-        this.balance += amount;
+        // Increase balance by the deposit amount.
+        balance += amount;
     }
 
-    /**
-     * Withdraws money from the account.
-     * @param amount Amount to withdraw (must be positive and not exceed balance)
-     * @throws InvalidAmountException if amount is negative or zero
-     * @throws InsufficientBalanceException if balance is insufficient
-     */
+    // Subtracts money from the account after validation.
     public void withdraw(double amount) throws InvalidAmountException, InsufficientBalanceException {
+        // Reject zero or negative values.
         if (amount <= 0) {
             throw new InvalidAmountException("Withdrawal amount must be positive.");
         }
-        if (amount > this.balance) {
+        // Reject withdrawal larger than current balance.
+        if (amount > balance) {
             throw new InsufficientBalanceException("Insufficient balance for withdrawal.");
         }
-        this.balance -= amount;
+        // Decrease balance by the withdrawal amount.
+        balance -= amount;
     }
 
-    /**
-     * Checks if the provided PIN matches the account PIN.
-     */
-    public boolean validatePin(String pin) {
-        return this.pin.equals(pin);
+    // Checks whether entered PIN matches stored PIN.
+    public boolean validatePin(String enteredPin) {
+        // Return true only on exact string match.
+        return pin.equals(enteredPin);
     }
 
-    /**
-     * Checks if account is active.
-     */
+    // Checks whether account status is ACTIVE.
     public boolean isActive() {
-        return "ACTIVE".equals(this.accountStatus);
+        // Return true only when status equals ACTIVE constant.
+        return STATUS_ACTIVE.equals(accountStatus);
     }
 
-    /**
-     * Displays account details.
-     */
+    // Prints account details to standard output.
     public void displayAccountDetails() {
+        // Print account number line.
         System.out.println("Account Number: " + accountNumber);
+        // Print holder name line.
         System.out.println("Account Holder: " + accountHolderName);
+        // Print balance line.
         System.out.println("Balance: $" + balance);
+        // Print status line.
         System.out.println("Status: " + accountStatus);
     }
 
-    /**
-     * Converts account data to CSV format for file storage.
-     */
+    // Serializes account into one CSV line.
     public String toFileString() {
-        return String.join(",", accountNumber, accountHolderName, 
-                          String.valueOf(balance), pin, accountStatus);
+        // Join all fields with commas in fixed order.
+        return String.join(",", accountNumber, accountHolderName, String.valueOf(balance), pin, accountStatus);
     }
 
-    /**
-     * Creates an Account object from a CSV line.
-     */
+    // Parses one CSV line into an Account object.
     public static Account fromFileString(String line) {
-        String[] parts = line.split(",");
-        if (parts.length >= 5) {
-            Account acc = new Account(parts[0], parts[1], 
-                                     Double.parseDouble(parts[2]), parts[3]);
-            acc.setAccountStatus(parts[4]);
-            return acc;
+        // Split the raw line by commas.
+        String[] csvParts = line.split(",");
+        // Validate minimum expected field count.
+        if (csvParts.length >= 5) {
+            // Build account from parsed values.
+            Account loadedAccount = new Account(
+                csvParts[0],
+                csvParts[1],
+                Double.parseDouble(csvParts[2]),
+                csvParts[3]
+            );
+            // Apply parsed status value.
+            loadedAccount.setAccountStatus(csvParts[4]);
+            // Return parsed account instance.
+            return loadedAccount;
         }
+        // Return null when CSV format is invalid.
         return null;
     }
 }

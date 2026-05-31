@@ -1,151 +1,241 @@
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+import java.awt.Color;
+import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.util.Arrays;
 
 /**
- * LoginPanel provides the main login screen.
- * Allows users to choose between Admin login, Client login, About Us, and Exit.
+ * Login entry screen for admin and client users.
  */
 public class LoginPanel extends JPanel {
-    private BankManagementSystem app;
-    
-    private JComboBox<String> userTypeCombo;
-    private JTextField usernameField;
-    private JPasswordField passwordField;
-    private JButton loginButton;
-    private JButton aboutButton;
-    private JButton exitButton;
-    
-    private JLabel statusLabel;
+    // Dropdown option text for admin login mode.
+    private static final String USER_TYPE_ADMIN = "Admin Login";
+    // Dropdown option text for client login mode.
+    private static final String USER_TYPE_CLIENT = "Client Login";
 
+    // Reference to app controller for login actions and screen switching.
+    private final BankManagementSystem bankingApp;
+
+    // Dropdown used to choose admin/client login type.
+    private JComboBox<String> userTypeDropdown;
+    // Text field for username (admin) or account number (client).
+    private JTextField usernameOrAccountField;
+    // Secret field for password (admin) or PIN (client).
+    private JPasswordField passwordOrPinField;
+    // Button that triggers login action.
+    private JButton loginButton;
+    // Button that opens About screen.
+    private JButton aboutUsButton;
+    // Button that exits application.
+    private JButton exitButton;
+    // Label that shows current login status message.
+    private JLabel loginStatusLabel;
+
+    // Creates login screen with parent app controller reference.
     public LoginPanel(BankManagementSystem app) {
-        this.app = app;
+        // Save parent app reference.
+        this.bankingApp = app;
+        // Instantiate all Swing components.
         initializeComponents();
-        setupLayout();
+        // Arrange components on screen.
+        buildLayout();
+        // Attach user interaction listeners.
         setupListeners();
     }
 
-    /**
-     * Initializes GUI components.
-     */
+    // Creates all UI components used by this screen.
     private void initializeComponents() {
-        userTypeCombo = new JComboBox<>(new String[]{"Admin Login", "Client Login"});
-        usernameField = new JTextField(15);
-        passwordField = new JPasswordField(15);
+        // Build dropdown with two login modes.
+        userTypeDropdown = new JComboBox<>(new String[] {USER_TYPE_ADMIN, USER_TYPE_CLIENT});
+        // Create text field for identity input.
+        usernameOrAccountField = new JTextField(15);
+        // Create password/PIN field.
+        passwordOrPinField = new JPasswordField(15);
+        // Create login button.
         loginButton = new JButton("Login");
-        aboutButton = new JButton("About Us");
+        // Create about-us button.
+        aboutUsButton = new JButton("About Us");
+        // Create exit button.
         exitButton = new JButton("Exit");
-        statusLabel = new JLabel(" ");
+        // Initialize status label with blank text.
+        loginStatusLabel = new JLabel(" ");
     }
 
-    /**
-     * Sets up the panel layout.
-     */
-    private void setupLayout() {
+    // Builds visual layout using GridBag constraints.
+    private void buildLayout() {
+        // Set layout manager.
         setLayout(new GridBagLayout());
+        // Apply panel background color.
         setBackground(new Color(240, 248, 255));
-        
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-        gbc.anchor = GridBagConstraints.CENTER;
-        
+
+        // Reusable constraints object for component placement.
+        GridBagConstraints constraints = new GridBagConstraints();
+        // Add spacing around each cell.
+        constraints.insets = new Insets(10, 10, 10, 10);
+        // Center components in their grid cells.
+        constraints.anchor = GridBagConstraints.CENTER;
+
+        // Create title label text.
         JLabel titleLabel = new JLabel("KAAFI BANK MANAGEMENT SYSTEM");
+        // Use large bold font for title.
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        // Apply dark-blue title color.
         titleLabel.setForeground(new Color(25, 25, 112));
-        gbc.gridwidth = 2;
-        gbc.gridy = 0;
-        add(titleLabel, gbc);
-        
-        gbc.gridwidth = 1;
-        gbc.gridy = 1;
-        add(new JLabel("User Type:"), gbc);
-        gbc.gridx = 1;
-        add(userTypeCombo, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        add(new JLabel("Username/Account #:"), gbc);
-        gbc.gridx = 1;
-        add(usernameField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        add(new JLabel("Password/PIN:"), gbc);
-        gbc.gridx = 1;
-        add(passwordField, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 4;
-        add(loginButton, gbc);
-        gbc.gridx = 1;
-        add(aboutButton, gbc);
-        
-        gbc.gridx = 0;
-        gbc.gridy = 5;
-        gbc.gridwidth = 2;
-        add(exitButton, gbc);
-        
-        gbc.gridy = 6;
-        add(statusLabel, gbc);
+        // Let title span two columns.
+        constraints.gridwidth = 2;
+        // Place title on row 0.
+        constraints.gridy = 0;
+        // Add title to panel.
+        add(titleLabel, constraints);
+
+        // Reset to single-column width.
+        constraints.gridwidth = 1;
+        // Move to row 1.
+        constraints.gridy = 1;
+        // Add "User Type" label.
+        add(new JLabel("User Type:"), constraints);
+        // Move to second column.
+        constraints.gridx = 1;
+        // Add dropdown control.
+        add(userTypeDropdown, constraints);
+
+        // Move back to first column.
+        constraints.gridx = 0;
+        // Move to row 2.
+        constraints.gridy = 2;
+        // Add identity field label.
+        add(new JLabel("Username/Account #:"), constraints);
+        // Move to second column.
+        constraints.gridx = 1;
+        // Add identity text field.
+        add(usernameOrAccountField, constraints);
+
+        // Move back to first column.
+        constraints.gridx = 0;
+        // Move to row 3.
+        constraints.gridy = 3;
+        // Add secret field label.
+        add(new JLabel("Password/PIN:"), constraints);
+        // Move to second column.
+        constraints.gridx = 1;
+        // Add secret field.
+        add(passwordOrPinField, constraints);
+
+        // Move to first column.
+        constraints.gridx = 0;
+        // Move to row 4.
+        constraints.gridy = 4;
+        // Add login button.
+        add(loginButton, constraints);
+        // Move to second column.
+        constraints.gridx = 1;
+        // Add about-us button.
+        add(aboutUsButton, constraints);
+
+        // Move to first column.
+        constraints.gridx = 0;
+        // Move to row 5.
+        constraints.gridy = 5;
+        // Let exit button span both columns.
+        constraints.gridwidth = 2;
+        // Add exit button.
+        add(exitButton, constraints);
+
+        // Move to row 6.
+        constraints.gridy = 6;
+        // Add status label.
+        add(loginStatusLabel, constraints);
     }
 
-    /**
-     * Sets up event listeners.
-     */
+    // Connects user interactions to app actions.
     private void setupListeners() {
-        loginButton.addActionListener(e -> performLogin());
-        
-        aboutButton.addActionListener(e -> app.showPanel("ABOUT_US"));
-        
-        exitButton.addActionListener(e -> app.exitApplication());
-        
-        passwordField.addActionListener(e -> performLogin());
+        // Handle login button click.
+        loginButton.addActionListener(event -> performLogin());
+        // Navigate to About screen.
+        aboutUsButton.addActionListener(event -> bankingApp.showPanel("ABOUT_US"));
+        // Request app shutdown flow.
+        exitButton.addActionListener(event -> bankingApp.exitApplication());
+        // Trigger login when Enter is pressed inside password field.
+        passwordOrPinField.addActionListener(event -> performLogin());
     }
 
-    /**
-     * Validates input and performs login.
-     */
+    // Reads form values and performs selected login flow.
     private void performLogin() {
-        String input = usernameField.getText().trim();
-        char[] pwd = passwordField.getPassword();
-        String password = new String(pwd);
-        
-        if (input.isEmpty() || password.isEmpty()) {
-            statusLabel.setText("Please enter all fields.");
-            return;
-        }
-        
-        if (userTypeCombo.getSelectedIndex() == 0) {
-            // Admin login
-            if (app.adminLogin(input, password)) {
-                statusLabel.setText("Login successful!");
-                clearFields();
-            } else {
-                statusLabel.setText("Invalid admin credentials.");
+        // Read trimmed identity input text.
+        String userInput = usernameOrAccountField.getText().trim();
+        // Read secret characters from password field.
+        char[] credentialChars = passwordOrPinField.getPassword();
+        // Convert chars to String for existing API usage.
+        String enteredSecret = new String(credentialChars);
+
+        try {
+            // Validate required fields before attempting login.
+            if (userInput.isEmpty() || enteredSecret.isEmpty()) {
+                loginStatusLabel.setText("Please enter all fields.");
+                return;
             }
+
+            // Get currently selected login type.
+            String selectedUserType = (String) userTypeDropdown.getSelectedItem();
+            // Route to admin login flow when admin mode is selected.
+            if (USER_TYPE_ADMIN.equals(selectedUserType)) {
+                handleAdminLogin(userInput, enteredSecret);
+            } else {
+                // Otherwise run client login flow.
+                handleClientLogin(userInput, enteredSecret);
+            }
+        } finally {
+            // Clear secret chars from memory buffer as a best-effort cleanup.
+            Arrays.fill(credentialChars, '\0');
+        }
+    }
+
+    // Runs admin authentication and updates status label.
+    private void handleAdminLogin(String username, String password) {
+        // Try admin login through app controller.
+        if (bankingApp.adminLogin(username, password)) {
+            // Show success message.
+            loginStatusLabel.setText("Login successful!");
+            // Clear input fields after success.
+            clearFields();
         } else {
-            // Client login
-            if (app.clientLogin(input, password)) {
-                statusLabel.setText("Login successful!");
-                clearFields();
-            } else {
-                statusLabel.setText("Invalid account number or PIN.");
-            }
+            // Show failure message.
+            loginStatusLabel.setText("Invalid admin credentials.");
         }
     }
 
-    /**
-     * Clears input fields.
-     */
-    private void clearFields() {
-        usernameField.setText("");
-        passwordField.setText("");
+    // Runs client authentication and updates status label.
+    private void handleClientLogin(String accountNumber, String pin) {
+        // Try client login through app controller.
+        if (bankingApp.clientLogin(accountNumber, pin)) {
+            // Show success message.
+            loginStatusLabel.setText("Login successful!");
+            // Clear input fields after success.
+            clearFields();
+        } else {
+            // Show failure message.
+            loginStatusLabel.setText("Invalid account number or PIN.");
+        }
     }
 
-    /**
-     * Clears status message.
-     */
+    // Clears identity and secret fields.
+    private void clearFields() {
+        // Clear username/account field text.
+        usernameOrAccountField.setText("");
+        // Clear password/PIN field text.
+        passwordOrPinField.setText("");
+    }
+
+    // Clears status label text.
     public void clearStatus() {
-        statusLabel.setText(" ");
+        // Replace status with blank placeholder.
+        loginStatusLabel.setText(" ");
     }
 }
