@@ -89,9 +89,8 @@ public class AboutUsPanel extends JPanel {
         // University info label.
         JLabel universityLabel = new JLabel("University: Dire Dawa University");
         // Course info label.
-        JLabel courseLabel = new JLabel("Course: Object-Oriented Programming (CS201)");
-        // Instructor info label (left blank after colon as in original data).
-        JLabel instructorLabel = new JLabel("Instructor:");
+        JLabel courseLabel = new JLabel("Course: Object-Oriented Programming");
+        
 
         // Create return button.
         backToLoginButton = new JButton("Back to Login");

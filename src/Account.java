@@ -1,5 +1,4 @@
 /**
- * Simple bank account model.
  * Keeps account identity, credential, status, and balance.
  */
 public class Account {
